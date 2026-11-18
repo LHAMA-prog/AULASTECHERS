@@ -1,0 +1,3235 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>Estude++ | Plataforma Escolar Integrada</title>
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Tone.js para síntese de som do cronômetro -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+        <!-- Google Fonts: Inter -->
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
+        <!-- Phosphor Icons -->
+        <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ["Inter", "sans-serif"],
+                        },
+                        colors: {
+                            escola: {
+                                50: "#ecfdf5",
+                                100: "#d1fae5",
+                                200: "#a7f3d0",
+                                300: "#6ee7b7",
+                                400: "#34d399",
+                                500: "#10b981",
+                                600: "#059669",
+                                700: "#047857",
+                                800: "#065f46",
+                                900: "#064e3b",
+                                950: "#022c22",
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
+
+        <style>
+            body {
+                font-family: "Inter", sans-serif;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .transition-theme {
+                transition:
+                    background 0.4s ease,
+                    border-color 0.4s ease,
+                    color 0.4s ease,
+                    width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .btn-press:active {
+                transform: scale(0.97);
+            }
+            @keyframes shake {
+                0%,
+                100% {
+                    transform: translateX(0);
+                }
+                25% {
+                    transform: translateX(-6px);
+                }
+                75% {
+                    transform: translateX(6px);
+                }
+            }
+            .animate-shake {
+                animation: shake 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .animate-fade-in {
+                animation: fadeIn 0.25s ease-out;
+            }
+            @keyframes cardReveal {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.92) rotateY(70deg);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1) rotateY(0deg);
+                }
+            }
+            .animate-card-reveal {
+                animation: cardReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+        </style>
+    </head>
+    <body
+        class="bg-gradient-to-br from-escola-50 via-emerald-50/60 to-teal-50/70 text-slate-900 min-h-screen flex flex-col justify-between antialiased overflow-x-hidden"
+    >
+        <!-- =================================================================== -->
+        <!-- CABEÇALHO UNIFICADO (IDENTIDADE VERDE ESCOLAR)                      -->
+        <!-- =================================================================== -->
+        <header
+            class="sticky top-0 z-30 bg-gradient-to-r from-escola-800 via-escola-700 to-teal-700 text-white shadow-lg border-b border-escola-600/50"
+        >
+            <div
+                class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3"
+            >
+                <!-- Marca Estude++ -->
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 text-white flex items-center justify-center shadow-inner"
+                    >
+                        <i
+                            class="ph-bold ph-graduation-cap text-2xl text-escola-200"
+                        ></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1
+                                class="font-black text-xl sm:text-2xl tracking-tight text-white leading-none"
+                            >
+                                Estude<span class="text-escola-300">++</span>
+                            </h1>
+                            <span
+                                class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-escola-950/40 text-escola-200 border border-escola-400/30"
+                            >
+                                Portal do Aluno
+                            </span>
+                        </div>
+                        <p
+                            class="text-[11px] font-medium text-escola-100/90 mt-0.5"
+                        >
+                            Foco, Frequência e Notas em um só lugar
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Controles Rápidos do Cabeçalho -->
+                <div class="flex items-center gap-2">
+                    <!-- Pílula ao vivo do cronômetro quando rodando -->
+                    <div
+                        id="mini-timer-pill"
+                        class="hidden items-center gap-1.5 px-3 py-1.5 rounded-xl bg-escola-950/60 border border-escola-400/40 text-escola-200 text-xs font-extrabold"
+                    >
+                        <span
+                            class="w-2 h-2 rounded-full bg-escola-400 animate-ping"
+                        ></span>
+                        <span id="mini-timer-text">25:00</span>
+                    </div>
+
+                    <!-- Botão de Som Global -->
+                    <button
+                        id="soundToggleBtn"
+                        aria-label="Alternar som"
+                        title="Som do cronômetro"
+                        class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition text-escola-100 border border-white/15"
+                    >
+                        <svg
+                            id="soundOnIcon"
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                            ></path>
+                        </svg>
+                        <svg
+                            id="soundOffIcon"
+                            class="w-5 h-5 hidden text-escola-300/60"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                            ></path>
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                            ></path>
+                        </svg>
+                    </button>
+
+                    <!-- Botão Meta de Faltas -->
+                    <button
+                        onclick="openConfigModal()"
+                        class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-extrabold transition-colors btn-press"
+                        aria-label="Configurar meta de faltas"
+                    >
+                        <i
+                            class="ph-bold ph-sliders-horizontal text-sm text-escola-200"
+                        ></i>
+                        <span class="hidden sm:inline">Meta Faltas:</span>
+                        <strong id="header-limit-display">50</strong>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- =================================================================== -->
+        <!-- CONTEÚDO PRINCIPAL UNIFICADO                                        -->
+        <!-- =================================================================== -->
+        <main
+            class="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 pt-5 pb-24 sm:pb-10 flex flex-col gap-6"
+        >
+            <!-- PAINEL DE RESUMO RÁPIDO DO ESTUDANTE (INTEGRA OS 4 MÓDULOS) -->
+            <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+                <!-- Card Resumo 1: Ciclos de Estudo -->
+                <button
+                    onclick="filterView('foco')"
+                    class="bg-white rounded-2xl p-3.5 sm:p-4 border border-escola-200/80 shadow-sm hover:border-escola-400 transition-all text-left flex flex-col justify-between btn-press"
+                >
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span
+                            class="w-8 h-8 rounded-xl bg-escola-100 text-escola-700 flex items-center justify-center"
+                        >
+                            <i class="ph-fill ph-timer text-lg"></i>
+                        </span>
+                        <span
+                            class="text-[10px] font-extrabold uppercase tracking-wider text-escola-600 bg-escola-50 px-2 py-0.5 rounded-full"
+                            >Foco</span
+                        >
+                    </div>
+                    <div>
+                        <p
+                            class="text-xl sm:text-2xl font-black text-slate-900 leading-none tabular-nums"
+                            id="summary-cycles"
+                        >
+                            0
+                        </p>
+                        <p
+                            class="text-[11px] font-semibold text-slate-500 mt-1"
+                        >
+                            Ciclos concluídos
+                        </p>
+                    </div>
+                </button>
+
+                <!-- Card Resumo 2: Frequência / Faltas -->
+                <button
+                    onclick="filterView('faltas')"
+                    class="bg-white rounded-2xl p-3.5 sm:p-4 border border-escola-200/80 shadow-sm hover:border-escola-400 transition-all text-left flex flex-col justify-between btn-press"
+                >
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span
+                            class="w-8 h-8 rounded-xl bg-escola-100 text-escola-700 flex items-center justify-center"
+                        >
+                            <i class="ph-fill ph-calendar-check text-lg"></i>
+                        </span>
+                        <span
+                            id="summary-faltas-badge"
+                            class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full"
+                            >Seguro</span
+                        >
+                    </div>
+                    <div>
+                        <p
+                            class="text-xl sm:text-2xl font-black text-slate-900 leading-none tabular-nums"
+                        >
+                            <span id="summary-absences">0</span
+                            ><span class="text-xs font-bold text-slate-400"
+                                >/<span id="summary-limit">50</span></span
+                            >
+                        </p>
+                        <p
+                            class="text-[11px] font-semibold text-slate-500 mt-1"
+                        >
+                            Faltas registradas
+                        </p>
+                    </div>
+                </button>
+
+                <!-- Card Resumo 3: Último Cálculo de Nota -->
+                <button
+                    onclick="filterView('notas')"
+                    class="bg-white rounded-2xl p-3.5 sm:p-4 border border-escola-200/80 shadow-sm hover:border-escola-400 transition-all text-left flex flex-col justify-between btn-press"
+                >
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span
+                            class="w-8 h-8 rounded-xl bg-escola-100 text-escola-700 flex items-center justify-center"
+                        >
+                            <i class="ph-fill ph-exam text-lg"></i>
+                        </span>
+                        <span
+                            class="text-[10px] font-extrabold uppercase tracking-wider text-escola-600 bg-escola-50 px-2 py-0.5 rounded-full"
+                            >Média 6,0</span
+                        >
+                    </div>
+                    <div>
+                        <p
+                            class="text-xl sm:text-2xl font-black text-slate-900 leading-none tabular-nums"
+                            id="summary-needed-grade"
+                        >
+                            —
+                        </p>
+                        <p
+                            class="text-[11px] font-semibold text-slate-500 mt-1"
+                            id="summary-grade-label"
+                        >
+                            Nota na 4ª prova
+                        </p>
+                    </div>
+                </button>
+
+                <!-- Card Resumo 4: Oráculo / Tarô da Prova -->
+                <button
+                    onclick="filterView('tarot')"
+                    class="bg-white rounded-2xl p-3.5 sm:p-4 border border-escola-200/80 shadow-sm hover:border-escola-400 transition-all text-left flex flex-col justify-between btn-press"
+                >
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span
+                            class="w-8 h-8 rounded-xl bg-escola-100 text-escola-700 flex items-center justify-center"
+                        >
+                            <i class="ph-fill ph-sparkle text-lg"></i>
+                        </span>
+                        <span
+                            class="text-[10px] font-extrabold uppercase tracking-wider text-escola-600 bg-escola-50 px-2 py-0.5 rounded-full"
+                            >Oráculo</span
+                        >
+                    </div>
+                    <div>
+                        <p
+                            class="text-base sm:text-lg font-black text-slate-900 leading-tight truncate"
+                            id="summary-tarot-verdict"
+                        >
+                            Consultar
+                        </p>
+                        <p
+                            class="text-[11px] font-semibold text-slate-500 mt-1 truncate"
+                            id="summary-tarot-subject"
+                        >
+                            Tarô da Prova
+                        </p>
+                    </div>
+                </button>
+            </section>
+
+            <!-- BARRA DE FILTRO DE VISUALIZAÇÃO (TUDO JUNTO OU POR FERRAMENTA) -->
+            <div
+                class="bg-white p-1.5 rounded-2xl border border-escola-200/80 shadow-xs grid grid-cols-5 gap-1"
+            >
+                <button
+                    onclick="filterView('all')"
+                    data-view="all"
+                    class="view-filter-btn py-2 px-1.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all bg-escola-600 text-white shadow-sm"
+                >
+                    <i class="ph-bold ph-squares-four text-sm"></i>
+                    <span>Tudo</span>
+                </button>
+                <button
+                    onclick="filterView('foco')"
+                    data-view="foco"
+                    class="view-filter-btn py-2 px-1.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-escola-50"
+                >
+                    <i class="ph-bold ph-timer text-sm"></i>
+                    <span>Foco</span>
+                </button>
+                <button
+                    onclick="filterView('faltas')"
+                    data-view="faltas"
+                    class="view-filter-btn py-2 px-1.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-escola-50"
+                >
+                    <i class="ph-bold ph-calendar-x text-sm"></i>
+                    <span>Faltas</span>
+                </button>
+                <button
+                    onclick="filterView('notas')"
+                    data-view="notas"
+                    class="view-filter-btn py-2 px-1.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-escola-50"
+                >
+                    <i class="ph-bold ph-calculator text-sm"></i>
+                    <span>Notas</span>
+                </button>
+                <button
+                    onclick="filterView('tarot')"
+                    data-view="tarot"
+                    class="view-filter-btn py-2 px-1.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-escola-50"
+                >
+                    <i class="ph-bold ph-sparkle text-sm"></i>
+                    <span>Tarô</span>
+                </button>
+            </div>
+
+            <!-- GRADE UNIFICADA DOS 4 MÓDULOS COM A MESMA ESTÉTICA VERDE ESCOLAR -->
+            <div
+                id="modules-grid"
+                class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"
+            >
+                <!-- =============================================================== -->
+                <!-- CARD 1: FOCO TOTAL (CRONÔMETRO DE ESTUDOS)                      -->
+                <!-- =============================================================== -->
+                <section
+                    id="module-foco"
+                    class="module-card bg-white rounded-3xl border border-escola-200/90 shadow-lg shadow-escola-900/5 overflow-hidden animate-fade-in"
+                >
+                    <!-- Cabeçalho do Card -->
+                    <div
+                        class="bg-gradient-to-r from-escola-700 to-escola-600 px-6 py-4 text-white flex items-center justify-between"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
+                            >
+                                <i class="ph-bold ph-timer text-xl"></i>
+                            </div>
+                            <div>
+                                <h2
+                                    class="font-extrabold text-base leading-tight"
+                                >
+                                    Foco Total
+                                </h2>
+                                <p
+                                    class="text-[11px] text-escola-100 font-medium"
+                                >
+                                    Cronômetro de metas de estudo
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            id="focoStatusBadge"
+                            class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/25"
+                        >
+                            Hora de Focar
+                        </span>
+                    </div>
+
+                    <div class="p-6 flex flex-col items-center">
+                        <!-- Seletor de Modo (Estudo / Pausa / 1 Minuto) -->
+                        <div
+                            class="w-full bg-escola-50 p-1.5 rounded-2xl border border-escola-200/80 flex items-center justify-between gap-1 mb-6"
+                        >
+                            <button
+                                id="modeStudyBtn"
+                                class="flex-1 py-2 px-2 rounded-xl text-xs font-extrabold transition-all duration-200 bg-escola-600 text-white shadow-sm"
+                            >
+                                Estudo (25m)
+                            </button>
+                            <button
+                                id="modeBreakBtn"
+                                class="flex-1 py-2 px-2 rounded-xl text-xs font-extrabold transition-all duration-200 text-escola-700 hover:bg-escola-100/70"
+                            >
+                                Pausa (5m)
+                            </button>
+                            <button
+                                id="modeQuickBtn"
+                                class="flex-1 py-2 px-2 rounded-xl text-xs font-extrabold transition-all duration-200 text-escola-700 hover:bg-escola-100/70"
+                            >
+                                Rápido (1m)
+                            </button>
+                        </div>
+
+                        <!-- Anel Circular do Cronômetro -->
+                        <div
+                            class="relative w-56 h-56 sm:w-60 sm:h-60 flex items-center justify-center mb-6"
+                        >
+                            <svg
+                                class="w-full h-full transform -rotate-90 drop-shadow-sm"
+                                viewBox="0 0 120 120"
+                            >
+                                <circle
+                                    cx="60"
+                                    cy="60"
+                                    r="54"
+                                    fill="none"
+                                    stroke="#d1fae5"
+                                    stroke-width="7"
+                                />
+                                <circle
+                                    id="progressRing"
+                                    cx="60"
+                                    cy="60"
+                                    r="54"
+                                    fill="none"
+                                    stroke="#059669"
+                                    stroke-width="7"
+                                    stroke-linecap="round"
+                                    stroke-dasharray="339.292"
+                                    stroke-dashoffset="0"
+                                    class="transition-all duration-500 ease-linear"
+                                />
+                            </svg>
+
+                            <div
+                                class="absolute inset-0 flex flex-col items-center justify-center text-center px-4"
+                            >
+                                <div
+                                    id="timerDisplay"
+                                    class="text-5xl sm:text-6xl font-black tracking-tight text-slate-900 tabular-nums"
+                                >
+                                    25:00
+                                </div>
+                                <p
+                                    id="motivationalTip"
+                                    class="text-[11px] text-slate-500 font-medium mt-2 leading-snug max-w-[165px]"
+                                >
+                                    Deixe o celular de lado e mergulhe nos
+                                    estudos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Controles Principais -->
+                        <div
+                            class="w-full flex items-center justify-center gap-3 mb-5"
+                        >
+                            <button
+                                id="mainActionBtn"
+                                class="flex-1 py-3.5 px-6 rounded-2xl bg-escola-600 hover:bg-escola-500 btn-press transition-all duration-150 font-extrabold text-base text-white shadow-lg shadow-escola-600/25 flex items-center justify-center gap-2.5"
+                            >
+                                <svg
+                                    id="playIcon"
+                                    class="w-5 h-5 fill-current"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                                <svg
+                                    id="pauseIcon"
+                                    class="w-5 h-5 fill-current hidden"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                                </svg>
+                                <span id="mainActionText">Iniciar</span>
+                            </button>
+
+                            <button
+                                id="resetBtn"
+                                aria-label="Reiniciar cronômetro"
+                                class="p-3.5 rounded-2xl bg-escola-50 hover:bg-escola-100 btn-press transition-all duration-150 text-escola-700 border border-escola-200"
+                            >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2.2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                    ></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Rodapé de Ciclos Concluídos -->
+                        <div
+                            class="w-full bg-escola-50/80 border border-escola-200/80 rounded-2xl p-3.5 flex items-center justify-between"
+                        >
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="w-9 h-9 rounded-xl bg-escola-600 text-white flex items-center justify-center shadow-xs"
+                                >
+                                    <i
+                                        class="ph-bold ph-check-circle text-lg"
+                                    ></i>
+                                </div>
+                                <div>
+                                    <p
+                                        class="text-xs font-extrabold text-slate-800"
+                                    >
+                                        Ciclos Concluídos
+                                    </p>
+                                    <p
+                                        class="text-[11px] text-slate-500 font-medium"
+                                    >
+                                        Sessões de 25 min completas
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2.5">
+                                <span
+                                    id="cycleCountDisplay"
+                                    class="text-2xl font-black text-escola-700 tabular-nums"
+                                    >0</span
+                                >
+                                <button
+                                    id="resetCyclesBtn"
+                                    title="Zerar ciclos"
+                                    class="text-[11px] font-bold text-slate-400 hover:text-rose-600 underline px-1.5 py-1 rounded"
+                                >
+                                    Zerar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =============================================================== -->
+                <!-- CARD 2: CALCULADORA DE NOTAS (QUANTO FALTA PARA MÉDIA 6,0)      -->
+                <!-- =============================================================== -->
+                <section
+                    id="module-notas"
+                    class="module-card bg-white rounded-3xl border border-escola-200/90 shadow-lg shadow-escola-900/5 overflow-hidden animate-fade-in"
+                >
+                    <!-- Cabeçalho do Card -->
+                    <div
+                        class="bg-gradient-to-r from-teal-700 to-escola-600 px-6 py-4 text-white flex items-center justify-between"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
+                            >
+                                <i class="ph-bold ph-calculator text-xl"></i>
+                            </div>
+                            <div>
+                                <h2
+                                    class="font-extrabold text-base leading-tight"
+                                >
+                                    Calculadora de Notas
+                                </h2>
+                                <p
+                                    class="text-[11px] text-escola-100 font-medium"
+                                >
+                                    Meta de aprovação: Média 6,0 (24 pts)
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/25"
+                        >
+                            4º Bimestre
+                        </span>
+                    </div>
+
+                    <div class="p-6">
+                        <p class="text-xs text-slate-500 font-medium mb-4">
+                            Informe suas notas de
+                            <strong class="text-slate-700">0 a 10</strong> nos 3
+                            primeiros bimestres para saber quanto precisa na
+                            última prova.
+                        </p>
+
+                        <!-- Caixa de Erro -->
+                        <div
+                            id="notas-error-box"
+                            class="hidden mb-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2"
+                            role="alert"
+                        >
+                            <i
+                                class="ph-fill ph-warning-circle text-base text-rose-500 shrink-0 mt-0.5"
+                            ></i>
+                            <span id="notas-error-message" class="font-bold"
+                                >Por favor, preencha todas as notas
+                                corretamente.</span
+                            >
+                        </div>
+
+                        <form id="grades-form" class="space-y-3.5" novalidate>
+                            <div class="grid grid-cols-3 gap-2.5">
+                                <!-- Nota 1 -->
+                                <div>
+                                    <label
+                                        for="nota1"
+                                        class="block text-[11px] font-extrabold text-escola-900 uppercase mb-1"
+                                        >1ª Nota</label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="nota1"
+                                        name="nota1"
+                                        inputmode="decimal"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        placeholder="Ex: 6.5"
+                                        class="w-full px-3 py-3 text-base font-extrabold text-center text-slate-800 bg-escola-50/50 border-2 border-escola-200 rounded-2xl focus:outline-none focus:border-escola-600 focus:bg-white focus:ring-4 focus:ring-escola-500/15 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Nota 2 -->
+                                <div>
+                                    <label
+                                        for="nota2"
+                                        class="block text-[11px] font-extrabold text-escola-900 uppercase mb-1"
+                                        >2ª Nota</label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="nota2"
+                                        name="nota2"
+                                        inputmode="decimal"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        placeholder="Ex: 5.0"
+                                        class="w-full px-3 py-3 text-base font-extrabold text-center text-slate-800 bg-escola-50/50 border-2 border-escola-200 rounded-2xl focus:outline-none focus:border-escola-600 focus:bg-white focus:ring-4 focus:ring-escola-500/15 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Nota 3 -->
+                                <div>
+                                    <label
+                                        for="nota3"
+                                        class="block text-[11px] font-extrabold text-escola-900 uppercase mb-1"
+                                        >3ª Nota</label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="nota3"
+                                        name="nota3"
+                                        inputmode="decimal"
+                                        step="0.1"
+                                        min="0"
+                                        max="10"
+                                        placeholder="Ex: 7.0"
+                                        class="w-full px-3 py-3 text-base font-extrabold text-center text-slate-800 bg-escola-50/50 border-2 border-escola-200 rounded-2xl focus:outline-none focus:border-escola-600 focus:bg-white focus:ring-4 focus:ring-escola-500/15 transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:text-xs"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação -->
+                            <div class="pt-1 flex gap-2.5">
+                                <button
+                                    type="submit"
+                                    id="btn-calcular"
+                                    class="flex-1 py-3.5 px-5 bg-escola-600 hover:bg-escola-500 btn-press text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-escola-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <span>Calcular Nota</span>
+                                    <i
+                                        class="ph-bold ph-arrow-right text-base"
+                                    ></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    id="btn-limpar-notas"
+                                    class="py-3.5 px-4 bg-escola-50 hover:bg-escola-100 border border-escola-200 text-escola-800 font-bold text-xs rounded-2xl transition-all cursor-pointer btn-press"
+                                >
+                                    Limpar
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Cartão de Resultado Integrado -->
+                        <div
+                            id="notas-result-card"
+                            class="hidden mt-5 bg-escola-50/70 rounded-2xl border-2 border-escola-300 p-5 text-center transition-all"
+                        >
+                            <span
+                                id="notas-status-badge"
+                                class="inline-block px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider mb-2 bg-escola-100 text-escola-800"
+                            >
+                                Resultado
+                            </span>
+
+                            <p class="text-xs font-semibold text-slate-500">
+                                Você precisa tirar na 4ª prova:
+                            </p>
+
+                            <div
+                                class="my-1.5 flex items-baseline justify-center gap-1"
+                            >
+                                <span
+                                    id="needed-grade"
+                                    class="text-5xl font-black text-escola-700 tracking-tight"
+                                    >0,0</span
+                                >
+                                <span class="text-base font-bold text-slate-400"
+                                    >/ 10</span
+                                >
+                            </div>
+
+                            <p
+                                id="notas-result-message"
+                                class="text-xs sm:text-sm text-slate-700 font-medium mt-1.5 leading-relaxed"
+                            >
+                                Mensagem explicativa aqui.
+                            </p>
+
+                            <div
+                                class="mt-4 pt-3 border-t border-escola-200/70 grid grid-cols-2 gap-2.5 text-left"
+                            >
+                                <div
+                                    class="bg-white p-2.5 rounded-xl border border-escola-100"
+                                >
+                                    <span
+                                        class="block text-[10px] text-slate-400 font-bold uppercase"
+                                        >Pontos acumulados</span
+                                    >
+                                    <span
+                                        id="current-points"
+                                        class="text-sm font-black text-slate-800"
+                                        >0,0 pts</span
+                                    >
+                                </div>
+                                <div
+                                    class="bg-white p-2.5 rounded-xl border border-escola-100"
+                                >
+                                    <span
+                                        class="block text-[10px] text-slate-400 font-bold uppercase"
+                                        >Total necessário</span
+                                    >
+                                    <span
+                                        class="text-sm font-black text-escola-700"
+                                        >24,0 pts</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =============================================================== -->
+                <!-- CARD 3: CONTFALTA (HISTÓRICO E CONTROLE DE FALTAS)              -->
+                <!-- =============================================================== -->
+                <section
+                    id="module-faltas"
+                    class="module-card lg:col-span-2 bg-white rounded-3xl border border-escola-200/90 shadow-lg shadow-escola-900/5 overflow-hidden animate-fade-in"
+                >
+                    <!-- Cabeçalho do Card -->
+                    <div
+                        class="bg-gradient-to-r from-escola-800 via-escola-700 to-teal-700 px-6 py-4 text-white flex items-center justify-between"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
+                            >
+                                <i class="ph-bold ph-notebook text-xl"></i>
+                            </div>
+                            <div>
+                                <h2
+                                    class="font-extrabold text-base leading-tight"
+                                >
+                                    Contfalta • Controle de Frequência
+                                </h2>
+                                <p
+                                    class="text-[11px] text-escola-100 font-medium"
+                                >
+                                    Acompanhe suas faltas por matéria sem trava
+                                    de limite
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onclick="openConfigModal()"
+                            class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-extrabold border border-white/20 transition btn-press"
+                        >
+                            Ajustar Meta
+                        </button>
+                    </div>
+
+                    <div
+                        class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-start"
+                    >
+                        <!-- Coluna Esquerda: Semáforo e Ações -->
+                        <div class="md:col-span-5 flex flex-col gap-4">
+                            <!-- Cartão Semáforo Dinâmico (Verde -> Amarelo -> Vermelho) -->
+                            <div
+                                id="faltas-status-card"
+                                class="rounded-3xl p-5 text-white shadow-md transition-theme bg-gradient-to-br from-emerald-600 to-teal-600 relative overflow-hidden"
+                            >
+                                <div
+                                    class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white opacity-15 pointer-events-none"
+                                ></div>
+
+                                <div
+                                    class="flex items-center justify-between mb-3 relative z-10"
+                                >
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/25 backdrop-blur-sm"
+                                    >
+                                        <i
+                                            id="faltas-status-icon"
+                                            class="ph-fill ph-check-circle text-sm"
+                                        ></i>
+                                        <span id="faltas-status-label"
+                                            >Zona Verde • Seguro</span
+                                        >
+                                    </span>
+                                    <span
+                                        class="text-[11px] font-extrabold bg-black/15 px-2.5 py-1 rounded-full"
+                                        id="percentage-display"
+                                        >0% da meta</span
+                                    >
+                                </div>
+
+                                <div class="my-1 text-center relative z-10">
+                                    <div
+                                        class="flex items-baseline justify-center gap-1.5"
+                                    >
+                                        <span
+                                            id="absences-count"
+                                            class="text-6xl font-black tracking-tighter"
+                                            >0</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold opacity-85"
+                                            >/
+                                            <span id="limit-count"
+                                                >50</span
+                                            ></span
+                                        >
+                                    </div>
+                                    <p
+                                        class="text-xs font-semibold opacity-95 mt-1"
+                                    >
+                                        faltas acumuladas no ano
+                                    </p>
+                                </div>
+
+                                <div class="mt-4 relative z-10">
+                                    <div
+                                        class="w-full h-3.5 bg-black/20 rounded-full overflow-hidden p-0.5"
+                                    >
+                                        <div
+                                            id="progress-bar"
+                                            class="h-full bg-white rounded-full transition-theme"
+                                            style="width: 0%"
+                                        ></div>
+                                    </div>
+                                    <p
+                                        id="remaining-text"
+                                        class="mt-2 text-xs font-bold text-center"
+                                    >
+                                        Você ainda pode faltar 50 vezes na meta
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação Rápida -->
+                            <div class="grid grid-cols-3 gap-2.5">
+                                <button
+                                    onclick="removeAbsence()"
+                                    id="btn-remove"
+                                    class="col-span-1 bg-escola-50 border-2 border-escola-200 hover:border-escola-400 text-escola-800 rounded-2xl py-3.5 px-2 flex flex-col items-center justify-center gap-1 btn-press disabled:opacity-40 disabled:pointer-events-none transition-all"
+                                >
+                                    <i
+                                        class="ph-bold ph-minus-circle text-xl text-rose-500"
+                                    ></i>
+                                    <span class="text-[11px] font-extrabold"
+                                        >Tirar (-1)</span
+                                    >
+                                </button>
+
+                                <button
+                                    onclick="openAddModal()"
+                                    class="col-span-2 bg-gradient-to-r from-escola-600 to-teal-600 hover:opacity-95 text-white rounded-2xl py-3.5 px-4 flex items-center justify-center gap-2.5 shadow-lg shadow-escola-600/25 btn-press transition-all"
+                                >
+                                    <div
+                                        class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center"
+                                    >
+                                        <i class="ph-bold ph-plus text-xl"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <span
+                                            class="block font-extrabold text-sm leading-tight"
+                                            >Registrar Falta</span
+                                        >
+                                        <span
+                                            class="block text-[11px] text-escola-100 font-semibold"
+                                            >Por matéria</span
+                                        >
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Legenda Semáforo -->
+                            <div
+                                class="bg-escola-50/70 rounded-2xl p-3.5 border border-escola-200/70"
+                            >
+                                <h3
+                                    class="text-[11px] font-extrabold uppercase tracking-wider text-escola-800 mb-2 flex items-center gap-1.5"
+                                >
+                                    <i
+                                        class="ph-fill ph-traffic-signal text-sm text-escola-600"
+                                    ></i>
+                                    Semáforo de Frequência
+                                </h3>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div
+                                        class="p-2 rounded-xl bg-emerald-100/70 border border-emerald-200"
+                                    >
+                                        <p
+                                            class="text-[11px] font-extrabold text-emerald-800"
+                                        >
+                                            Verde
+                                        </p>
+                                        <p
+                                            class="text-[10px] text-emerald-700 font-semibold"
+                                        >
+                                            Até 59%
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="p-2 rounded-xl bg-amber-100/70 border border-amber-200"
+                                    >
+                                        <p
+                                            class="text-[11px] font-extrabold text-amber-800"
+                                        >
+                                            Amarelo
+                                        </p>
+                                        <p
+                                            class="text-[10px] text-amber-700 font-semibold"
+                                        >
+                                            60% a 84%
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="p-2 rounded-xl bg-rose-100/70 border border-rose-200"
+                                    >
+                                        <p
+                                            class="text-[11px] font-extrabold text-rose-800"
+                                        >
+                                            Vermelho
+                                        </p>
+                                        <p
+                                            class="text-[10px] text-rose-700 font-semibold"
+                                        >
+                                            85% ou +
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna Direita: Histórico por Matéria -->
+                        <div
+                            class="md:col-span-7 bg-escola-50/50 rounded-2xl p-4 border border-escola-200/80 flex flex-col min-h-[290px]"
+                        >
+                            <div class="flex items-center justify-between mb-3">
+                                <h3
+                                    class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5"
+                                >
+                                    <i
+                                        class="ph-fill ph-list-bullets text-escola-600 text-base"
+                                    ></i>
+                                    Histórico por Matéria
+                                </h3>
+                                <button
+                                    onclick="openResetModal()"
+                                    id="btn-clear-all"
+                                    class="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg hidden"
+                                >
+                                    Zerar tudo
+                                </button>
+                            </div>
+
+                            <div
+                                id="history-list"
+                                class="flex flex-col gap-2.5 overflow-y-auto max-h-72 pr-1"
+                            >
+                                <!-- Preenchido via JS -->
+                            </div>
+
+                            <div
+                                id="empty-history"
+                                class="flex-1 py-10 text-center flex flex-col items-center justify-center text-slate-400"
+                            >
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-escola-100 text-escola-600 flex items-center justify-center mb-2"
+                                >
+                                    <i class="ph-fill ph-sparkle text-2xl"></i>
+                                </div>
+                                <p class="text-xs font-bold text-slate-600">
+                                    Nenhuma falta registrada ainda!
+                                </p>
+                                <p
+                                    class="text-[11px] text-slate-400 font-medium mt-0.5"
+                                >
+                                    Toque em "Registrar Falta" para adicionar.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =============================================================== -->
+                <!-- CARD 4: TARÔ DA PROVA (ORÁCULO DE ESTUDOS POR MATÉRIA)          -->
+                <!-- =============================================================== -->
+                <section
+                    id="module-tarot"
+                    class="module-card lg:col-span-2 bg-white rounded-3xl border border-escola-200/90 shadow-lg shadow-escola-900/5 overflow-hidden animate-fade-in"
+                >
+                    <!-- Cabeçalho do Card -->
+                    <div
+                        class="bg-gradient-to-r from-escola-900 via-escola-700 to-teal-700 px-6 py-4 text-white flex items-center justify-between"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
+                            >
+                                <i
+                                    class="ph-bold ph-sparkle text-xl text-escola-200"
+                                ></i>
+                            </div>
+                            <div>
+                                <h2
+                                    class="font-extrabold text-base leading-tight"
+                                >
+                                    Tarô da Prova • Oráculo Estudantil
+                                </h2>
+                                <p
+                                    class="text-[11px] text-escola-100 font-medium"
+                                >
+                                    Tire uma carta para saber se precisa estudar
+                                    ou se dá para confiar na sorte
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/25"
+                        >
+                            22 Arcanos
+                        </span>
+                    </div>
+
+                    <div
+                        class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-start"
+                    >
+                        <!-- Coluna Esquerda: Seleção de Matéria (Igual ao sistema de Faltas) -->
+                        <div class="md:col-span-6 flex flex-col gap-4">
+                            <div>
+                                <label
+                                    class="block text-xs font-extrabold text-escola-900 uppercase mb-2"
+                                >
+                                    1. Escolha a Matéria da Prova *
+                                </label>
+                                <div
+                                    id="tarot-subject-chips"
+                                    class="flex flex-wrap gap-1.5 mb-3"
+                                >
+                                    <!-- Chips gerados via JS com as mesmas matérias -->
+                                </div>
+                                <input
+                                    type="text"
+                                    id="tarot-subject-input"
+                                    oninput="clearError('tarot-error')"
+                                    placeholder="Ou digite o nome da matéria/prova..."
+                                    class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-escola-600 focus:outline-none text-sm font-semibold bg-escola-50/40 focus:bg-white transition-colors"
+                                />
+                            </div>
+
+                            <!-- Erro de validação -->
+                            <div
+                                id="tarot-error"
+                                class="hidden items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold"
+                            >
+                                <i
+                                    class="ph-fill ph-warning-circle text-base shrink-0"
+                                ></i>
+                                <span id="tarot-error-text"
+                                    >Selecione ou digite uma matéria para
+                                    consultar o tarô!</span
+                                >
+                            </div>
+
+                            <!-- Botão de Tirar Carta -->
+                            <button
+                                type="button"
+                                onclick="drawTarotCard()"
+                                class="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-escola-700 via-escola-600 to-teal-600 hover:opacity-95 text-white font-extrabold text-sm shadow-lg shadow-escola-600/25 btn-press flex items-center justify-center gap-2.5 cursor-pointer"
+                            >
+                                <i class="ph-bold ph-cards text-xl"></i>
+                                <span>Tirar Carta do Destino</span>
+                            </button>
+
+                            <!-- Histórico Recente de Tiragens -->
+                            <div
+                                id="tarot-history-wrapper"
+                                class="hidden pt-2 border-t border-escola-100"
+                            >
+                                <div
+                                    class="flex items-center justify-between mb-2"
+                                >
+                                    <span
+                                        class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400"
+                                        >Últimas consultas</span
+                                    >
+                                    <button
+                                        type="button"
+                                        onclick="clearTarotHistory()"
+                                        class="text-[11px] font-bold text-slate-400 hover:text-rose-600 underline"
+                                    >
+                                        Limpar
+                                    </button>
+                                </div>
+                                <div
+                                    id="tarot-history-list"
+                                    class="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-1"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna Direita: Carta Revelada -->
+                        <div
+                            class="md:col-span-6 flex flex-col items-center justify-center"
+                        >
+                            <!-- Estado Inicial (Carta Virada) -->
+                            <div
+                                id="tarot-card-back"
+                                onclick="drawTarotCard()"
+                                class="w-full max-w-xs rounded-3xl bg-gradient-to-br from-escola-900 via-escola-800 to-teal-900 border-2 border-escola-500/40 p-7 text-center text-white shadow-xl cursor-pointer hover:scale-[1.01] transition-transform relative overflow-hidden"
+                            >
+                                <div
+                                    class="absolute inset-2.5 rounded-2xl border border-escola-400/30 pointer-events-none"
+                                ></div>
+                                <div
+                                    class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/10 border border-escola-300/30 flex items-center justify-center text-3xl shadow-inner"
+                                >
+                                    🔮
+                                </div>
+                                <p
+                                    class="text-[11px] font-extrabold uppercase tracking-widest text-escola-300 mb-1"
+                                >
+                                    Oráculo Estude++
+                                </p>
+                                <h3 class="text-lg font-black text-white mb-2">
+                                    Carta Aguardando
+                                </h3>
+                                <p
+                                    class="text-xs text-escola-100/85 leading-relaxed"
+                                >
+                                    Escolha uma matéria ao lado e toque para
+                                    descobrir se você precisa virar a noite
+                                    estudando ou se já está preparado.
+                                </p>
+                            </div>
+
+                            <!-- Estado Revelado (Resultado da Carta) -->
+                            <div
+                                id="tarot-card-front"
+                                class="hidden w-full max-w-xs rounded-3xl border-2 p-6 text-center shadow-xl relative overflow-hidden animate-card-reveal"
+                            >
+                                <div
+                                    class="flex items-center justify-between mb-3"
+                                >
+                                    <span
+                                        id="tarot-arcana-num"
+                                        class="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/70 text-slate-700"
+                                    >
+                                        Arcano I
+                                    </span>
+                                    <span
+                                        id="tarot-verdict-badge"
+                                        class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full"
+                                    >
+                                        Estude Agora!
+                                    </span>
+                                </div>
+
+                                <div
+                                    id="tarot-card-emoji"
+                                    class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white/80 shadow-sm flex items-center justify-center text-4xl"
+                                >
+                                    📚
+                                </div>
+
+                                <p
+                                    id="tarot-revealed-subject"
+                                    class="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-0.5"
+                                >
+                                    Matemática
+                                </p>
+                                <h3
+                                    id="tarot-card-title"
+                                    class="text-xl font-black text-slate-900 mb-2"
+                                >
+                                    O Eremita da Madrugada
+                                </h3>
+                                <p
+                                    id="tarot-card-desc"
+                                    class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed mb-4"
+                                >
+                                    Descrição da previsão aqui.
+                                </p>
+
+                                <!-- Ação Integrada com o Cronômetro Foco Total -->
+                                <button
+                                    id="tarot-go-focus-btn"
+                                    type="button"
+                                    onclick="startFocusFromTarot()"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-escola-700 hover:bg-escola-600 text-white font-extrabold text-xs shadow-sm btn-press flex items-center justify-center gap-1.5"
+                                >
+                                    <i class="ph-bold ph-timer text-base"></i>
+                                    <span>Ir para o Cronômetro Foco Total</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- BARRA INFERIOR MOBILE PARA ACESSO RÁPIDO -->
+        <nav
+            class="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-escola-200 px-2 py-2 shadow-lg"
+        >
+            <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
+                <button
+                    onclick="filterView('all')"
+                    data-view="all"
+                    class="mobile-view-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[10px] font-extrabold bg-escola-600 text-white"
+                >
+                    <i class="ph-bold ph-squares-four text-lg"></i>
+                    <span>Tudo</span>
+                </button>
+                <button
+                    onclick="filterView('foco')"
+                    data-view="foco"
+                    class="mobile-view-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[10px] font-extrabold text-slate-600"
+                >
+                    <i class="ph-bold ph-timer text-lg"></i>
+                    <span>Foco</span>
+                </button>
+                <button
+                    onclick="filterView('notas')"
+                    data-view="notas"
+                    class="mobile-view-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[10px] font-extrabold text-slate-600"
+                >
+                    <i class="ph-bold ph-calculator text-lg"></i>
+                    <span>Notas</span>
+                </button>
+                <button
+                    onclick="filterView('faltas')"
+                    data-view="faltas"
+                    class="mobile-view-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[10px] font-extrabold text-slate-600"
+                >
+                    <i class="ph-bold ph-calendar-x text-lg"></i>
+                    <span>Faltas</span>
+                </button>
+                <button
+                    onclick="filterView('tarot')"
+                    data-view="tarot"
+                    class="mobile-view-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 text-[10px] font-extrabold text-slate-600"
+                >
+                    <i class="ph-bold ph-sparkle text-lg"></i>
+                    <span>Tarô</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- =================================================================== -->
+        <!-- MODAIS E NOTIFICAÇÕES UNIFICADOS                                    -->
+        <!-- =================================================================== -->
+
+        <!-- Notificação Toast Global -->
+        <div
+            id="unifiedToast"
+            class="fixed top-20 left-1/2 transform -translate-x-1/2 -translate-y-32 opacity-0 transition-all duration-300 z-50 w-[90%] max-w-sm bg-escola-950 text-white px-4 py-3.5 rounded-2xl shadow-2xl border border-escola-500/40 flex items-center gap-3 pointer-events-none"
+        >
+            <div
+                class="w-8 h-8 rounded-full bg-escola-500/30 text-escola-300 flex items-center justify-center shrink-0"
+            >
+                <i class="ph-fill ph-bell-ringing text-lg"></i>
+            </div>
+            <div class="flex-1">
+                <h4 id="toastTitle" class="text-xs font-extrabold">Estude++</h4>
+                <p id="toastMessage" class="text-xs text-escola-100 mt-0.5">
+                    Notificação.
+                </p>
+            </div>
+        </div>
+
+        <!-- Modal de "Anúncio / Paywall" de Piada aos 0:10 do Cronômetro -->
+        <div
+            id="jokeAdModal"
+            class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+        >
+            <div
+                class="w-full max-w-sm bg-gradient-to-b from-escola-900 to-slate-950 border-2 border-escola-400 rounded-3xl p-6 text-center shadow-2xl transform transition-all"
+            >
+                <div
+                    class="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-extrabold uppercase tracking-widest mb-3"
+                >
+                    Anúncio • Versão Gratuita Expirada
+                </div>
+
+                <div
+                    class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-escola-600/30 border border-escola-400/40 flex items-center justify-center text-3xl"
+                >
+                    💸
+                </div>
+
+                <h3 class="text-xl font-extrabold text-white mb-2">
+                    Ops! Seus segundos gratuitos acabaram!
+                </h3>
+                <p class="text-sm text-escola-100 mb-5 leading-relaxed">
+                    Para desbloquear os
+                    <span class="font-bold text-white"
+                        >últimos 10 segundos</span
+                    >
+                    de concentração e concluir este ciclo, pague a tarifa de
+                    <span class="text-amber-400 font-extrabold text-base"
+                        >$5,00</span
+                    >.
+                </p>
+
+                <div class="flex flex-col gap-2.5">
+                    <button
+                        id="payJokeBtn"
+                        class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-escola-500 to-teal-500 hover:from-escola-400 hover:to-teal-400 active:scale-95 transition font-bold text-white shadow-lg shadow-escola-600/40"
+                    >
+                        💳 Pagar $5,00 e Continuar
+                    </button>
+                    <button
+                        id="skipJokeBtn"
+                        class="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 transition text-xs font-medium text-escola-200"
+                    >
+                        Brincadeira! Continuar de graça 😉
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CONTFALTA 1: Adicionar Falta -->
+        <div
+            id="add-modal"
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-4"
+        >
+            <div
+                id="add-modal-box"
+                class="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-escola-200"
+            >
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="w-8 h-8 rounded-xl bg-escola-100 text-escola-700 flex items-center justify-center"
+                        >
+                            <i class="ph-bold ph-plus-circle text-lg"></i>
+                        </span>
+                        <h3 class="text-lg font-extrabold text-slate-900">
+                            Registrar Falta
+                        </h3>
+                    </div>
+                    <button
+                        onclick="closeModal('add-modal')"
+                        class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+                    >
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            class="block text-xs font-extrabold text-escola-900 uppercase mb-2"
+                            >Escolha a Matéria *</label
+                        >
+                        <div
+                            id="subject-chips"
+                            class="flex flex-wrap gap-1.5 mb-2.5 max-h-28 overflow-y-auto"
+                        ></div>
+                        <input
+                            type="text"
+                            id="absence-note"
+                            oninput="clearError('add-error')"
+                            placeholder="Ou digite o nome da matéria/motivo..."
+                            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-escola-600 focus:outline-none text-sm font-semibold transition-colors"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-xs font-extrabold text-escola-900 uppercase mb-1.5"
+                            >Quantidade de faltas *</label
+                        >
+                        <div class="grid grid-cols-4 gap-2 mb-2">
+                            <button
+                                type="button"
+                                onclick="selectAmount(1)"
+                                class="amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-escola-600 bg-escola-600 text-white"
+                                data-val="1"
+                            >
+                                +1
+                            </button>
+                            <button
+                                type="button"
+                                onclick="selectAmount(2)"
+                                class="amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-slate-200 text-slate-700"
+                                data-val="2"
+                            >
+                                +2
+                            </button>
+                            <button
+                                type="button"
+                                onclick="selectAmount(4)"
+                                class="amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-slate-200 text-slate-700"
+                                data-val="4"
+                            >
+                                +4
+                            </button>
+                            <button
+                                type="button"
+                                onclick="selectAmount(5)"
+                                class="amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-slate-200 text-slate-700"
+                                data-val="5"
+                            >
+                                +5
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500"
+                                >Outro valor (sem limite):</span
+                            >
+                            <input
+                                type="number"
+                                id="custom-amount-input"
+                                min="1"
+                                step="1"
+                                value="1"
+                                oninput="syncCustomAmount(this.value)"
+                                class="w-24 px-3 py-1.5 rounded-xl border-2 border-slate-200 focus:border-escola-600 focus:outline-none text-sm font-extrabold text-center text-escola-700"
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        id="add-error"
+                        class="hidden items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold"
+                    >
+                        <i
+                            class="ph-fill ph-warning-circle text-base shrink-0"
+                        ></i>
+                        <span id="add-error-text"
+                            >Preencha todos os campos obrigatórios!</span
+                        >
+                    </div>
+
+                    <button
+                        onclick="confirmAddAbsence()"
+                        class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-escola-600 to-teal-600 text-white font-extrabold text-sm shadow-lg shadow-escola-600/25 btn-press mt-1"
+                    >
+                        Salvar Falta
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CONTFALTA 2: Editar Registro Individual -->
+        <div
+            id="edit-modal"
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-4"
+        >
+            <div
+                id="edit-modal-box"
+                class="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-amber-200"
+            >
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center"
+                        >
+                            <i class="ph-bold ph-pencil-simple text-lg"></i>
+                        </span>
+                        <h3 class="text-lg font-extrabold text-slate-900">
+                            Editar Registro
+                        </h3>
+                    </div>
+                    <button
+                        onclick="closeModal('edit-modal')"
+                        class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+                    >
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+
+                <p class="text-xs text-slate-500 font-medium mb-4">
+                    Altere apenas este registro sem modificar o restante do seu
+                    histórico.
+                </p>
+
+                <input type="hidden" id="edit-item-id" />
+
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5"
+                            >Matéria ou Motivo *</label
+                        >
+                        <input
+                            type="text"
+                            id="edit-note-input"
+                            oninput="clearError('edit-error')"
+                            placeholder="Ex: Matemática"
+                            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-amber-500 focus:outline-none text-sm font-semibold"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5"
+                            >Quantidade de Faltas *</label
+                        >
+                        <input
+                            type="number"
+                            id="edit-amount-input"
+                            min="1"
+                            step="1"
+                            oninput="clearError('edit-error')"
+                            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-amber-500 focus:outline-none text-base font-extrabold text-center text-slate-800"
+                        />
+                    </div>
+
+                    <div
+                        id="edit-error"
+                        class="hidden items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold"
+                    >
+                        <i
+                            class="ph-fill ph-warning-circle text-base shrink-0"
+                        ></i>
+                        <span id="edit-error-text"
+                            >Preencha a matéria e uma quantidade válida!</span
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                        <button
+                            onclick="closeModal('edit-modal')"
+                            class="py-3.5 rounded-2xl bg-slate-100 text-slate-700 font-extrabold text-xs btn-press"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onclick="saveEditedItem()"
+                            class="py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold text-xs shadow-md btn-press"
+                        >
+                            Salvar Alteração
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CONTFALTA 3: Configurar Meta/Limite Anual -->
+        <div
+            id="config-modal"
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-4"
+        >
+            <div
+                id="config-modal-box"
+                class="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-escola-200"
+            >
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-extrabold text-slate-900">
+                        Meta de Faltas no Ano
+                    </h3>
+                    <button
+                        onclick="closeModal('config-modal')"
+                        class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
+                    >
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+
+                <p
+                    class="text-xs text-slate-500 mb-4 leading-relaxed font-medium"
+                >
+                    Defina a referência de faltas da escola para calcular as
+                    cores do semáforo (Verde, Amarelo e Vermelho). Você ainda
+                    poderá registrar quantas faltas quiser além desse número.
+                </p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            class="block text-xs font-extrabold text-slate-600 uppercase mb-1.5"
+                            >Total de faltas de referência *</label
+                        >
+                        <input
+                            type="number"
+                            id="input-max-limit"
+                            min="1"
+                            step="1"
+                            value="50"
+                            oninput="clearError('config-error')"
+                            class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-escola-600 focus:outline-none text-lg font-extrabold text-center text-escola-700"
+                        />
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <button
+                            type="button"
+                            onclick="setQuickLimit(50)"
+                            class="px-3 py-1.5 rounded-xl bg-escola-50 text-xs font-bold text-escola-700 hover:bg-escola-100"
+                        >
+                            50 dias (Padrão)
+                        </button>
+                        <button
+                            type="button"
+                            onclick="setQuickLimit(250)"
+                            class="px-3 py-1.5 rounded-xl bg-teal-50 text-xs font-bold text-teal-700 hover:bg-teal-100"
+                        >
+                            250 aulas
+                        </button>
+                        <button
+                            type="button"
+                            onclick="setQuickLimit(15)"
+                            class="px-3 py-1.5 rounded-xl bg-emerald-50 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
+                        >
+                            15 (Semestral)
+                        </button>
+                    </div>
+
+                    <div
+                        id="config-error"
+                        class="hidden items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold"
+                    >
+                        <i
+                            class="ph-fill ph-warning-circle text-base shrink-0"
+                        ></i>
+                        <span id="config-error-text"
+                            >Por favor, informe um número válido maior que
+                            zero!</span
+                        >
+                    </div>
+
+                    <button
+                        onclick="saveLimit()"
+                        class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-escola-600 to-teal-600 text-white font-extrabold text-sm shadow-md btn-press"
+                    >
+                        Salvar Referência
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL CONTFALTA 4: Confirmar Zerar Tudo -->
+        <div
+            id="reset-modal"
+            class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4"
+        >
+            <div
+                class="bg-white text-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center border border-rose-100"
+            >
+                <div
+                    class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3"
+                >
+                    <i class="ph-bold ph-warning text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-extrabold text-slate-900 mb-1">
+                    Zerar todas as faltas?
+                </h3>
+                <p class="text-xs text-slate-500 mb-5 font-medium">
+                    Isso vai apagar todo o seu histórico e voltar o contador
+                    para zero.
+                </p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button
+                        onclick="closeModal('reset-modal')"
+                        class="py-3 rounded-2xl bg-slate-100 text-slate-700 font-extrabold text-xs btn-press"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onclick="confirmResetAll()"
+                        class="py-3 rounded-2xl bg-rose-600 text-white font-extrabold text-xs btn-press"
+                    >
+                        Sim, Zerar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- JAVASCRIPT UNIFICADO DO ESTUDE++                                    -->
+        <!-- =================================================================== -->
+        <script>
+            // =====================================================================
+            // 1. FILTRO DE VISUALIZAÇÃO INTEGRADO (TUDO JUNTO OU FOCO INDIVIDUAL)
+            // =====================================================================
+            function filterView(view) {
+                const grid = document.getElementById("modules-grid");
+                const modFoco = document.getElementById("module-foco");
+                const modNotas = document.getElementById("module-notas");
+                const modFaltas = document.getElementById("module-faltas");
+                const modTarot = document.getElementById("module-tarot");
+
+                if (view === "all") {
+                    grid.className =
+                        "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start";
+                    modFoco.classList.remove("hidden");
+                    modNotas.classList.remove("hidden");
+                    modFaltas.classList.remove("hidden");
+                    modTarot.classList.remove("hidden");
+                    modFaltas.classList.add("lg:col-span-2");
+                    modTarot.classList.add("lg:col-span-2");
+                } else {
+                    grid.className =
+                        "grid grid-cols-1 max-w-xl mx-auto w-full gap-6 items-start";
+                    modFoco.classList.toggle("hidden", view !== "foco");
+                    modNotas.classList.toggle("hidden", view !== "notas");
+                    modFaltas.classList.toggle("hidden", view !== "faltas");
+                    modTarot.classList.toggle("hidden", view !== "tarot");
+                    modFaltas.classList.remove("lg:col-span-2");
+                    modTarot.classList.remove("lg:col-span-2");
+                }
+
+                // Atualiza botões superiores e inferiores
+                document
+                    .querySelectorAll(".view-filter-btn, .mobile-view-btn")
+                    .forEach((btn) => {
+                        const active = btn.dataset.view === view;
+                        if (active) {
+                            btn.classList.add(
+                                "bg-escola-600",
+                                "text-white",
+                                "shadow-sm",
+                            );
+                            btn.classList.remove(
+                                "text-slate-600",
+                                "hover:bg-escola-50",
+                            );
+                        } else {
+                            btn.classList.remove(
+                                "bg-escola-600",
+                                "text-white",
+                                "shadow-sm",
+                            );
+                            btn.classList.add(
+                                "text-slate-600",
+                                "hover:bg-escola-50",
+                            );
+                        }
+                    });
+            }
+
+            // Notificação Toast Global
+            let unifiedToastTimer;
+            function showUnifiedToast(title, message) {
+                const toast = document.getElementById("unifiedToast");
+                document.getElementById("toastTitle").textContent = title;
+                document.getElementById("toastMessage").textContent = message;
+
+                toast.classList.remove("-translate-y-32", "opacity-0");
+                toast.classList.add("translate-y-0", "opacity-100");
+
+                clearTimeout(unifiedToastTimer);
+                unifiedToastTimer = setTimeout(() => {
+                    toast.classList.remove("translate-y-0", "opacity-100");
+                    toast.classList.add("-translate-y-32", "opacity-0");
+                }, 3800);
+            }
+
+            // =====================================================================
+            // 2. LÓGICA DO MÓDULO 1: FOCO TOTAL (CRONÔMETRO)
+            // =====================================================================
+            const STUDY_TIME = 25 * 60;
+            const BREAK_TIME = 5 * 60;
+            const QUICK_TIME = 1 * 60;
+
+            let currentMode = "study";
+            let timeLeft = STUDY_TIME;
+            let totalTime = STUDY_TIME;
+            let isRunning = false;
+            let timerInterval = null;
+            let cyclesCompleted =
+                parseInt(localStorage.getItem("focoTotalCycles")) || 0;
+            let soundEnabled = true;
+            let endingWarned = false;
+
+            const timerDisplay = document.getElementById("timerDisplay");
+            const progressRing = document.getElementById("progressRing");
+            const mainActionBtn = document.getElementById("mainActionBtn");
+            const mainActionText = document.getElementById("mainActionText");
+            const playIcon = document.getElementById("playIcon");
+            const pauseIcon = document.getElementById("pauseIcon");
+            const resetBtn = document.getElementById("resetBtn");
+            const modeStudyBtn = document.getElementById("modeStudyBtn");
+            const modeBreakBtn = document.getElementById("modeBreakBtn");
+            const modeQuickBtn = document.getElementById("modeQuickBtn");
+            const focoStatusBadge = document.getElementById("focoStatusBadge");
+            const motivationalTip = document.getElementById("motivationalTip");
+            const cycleCountDisplay =
+                document.getElementById("cycleCountDisplay");
+            const summaryCycles = document.getElementById("summary-cycles");
+            const resetCyclesBtn = document.getElementById("resetCyclesBtn");
+            const soundToggleBtn = document.getElementById("soundToggleBtn");
+            const soundOnIcon = document.getElementById("soundOnIcon");
+            const soundOffIcon = document.getElementById("soundOffIcon");
+            const jokeAdModal = document.getElementById("jokeAdModal");
+            const payJokeBtn = document.getElementById("payJokeBtn");
+            const skipJokeBtn = document.getElementById("skipJokeBtn");
+            const miniTimerPill = document.getElementById("mini-timer-pill");
+            const miniTimerText = document.getElementById("mini-timer-text");
+
+            const CIRCUMFERENCE = 2 * Math.PI * 54;
+            progressRing.style.strokeDasharray = CIRCUMFERENCE;
+            cycleCountDisplay.textContent = cyclesCompleted;
+            summaryCycles.textContent = cyclesCompleted;
+
+            function updateMiniTimerPill() {
+                if (isRunning) {
+                    miniTimerPill.classList.remove("hidden");
+                    miniTimerPill.classList.add("flex");
+                } else {
+                    miniTimerPill.classList.add("hidden");
+                    miniTimerPill.classList.remove("flex");
+                }
+            }
+
+            async function playCompletionSound() {
+                if (!soundEnabled) return;
+                try {
+                    await Tone.start();
+                    const synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sine" },
+                        envelope: {
+                            attack: 0.05,
+                            decay: 0.2,
+                            sustain: 0.3,
+                            release: 1.2,
+                        },
+                    }).toDestination();
+
+                    const now = Tone.now();
+                    synth.triggerAttackRelease(["C5", "E5", "G5"], "8n", now);
+                    synth.triggerAttackRelease(
+                        ["E5", "G5", "C6"],
+                        "4n",
+                        now + 0.25,
+                    );
+                } catch (error) {
+                    console.error("Erro ao reproduzir som:", error);
+                }
+            }
+
+            async function playWarningSound() {
+                if (!soundEnabled) return;
+                try {
+                    await Tone.start();
+                    const synth = new Tone.Synth({
+                        oscillator: { type: "triangle" },
+                        envelope: {
+                            attack: 0.02,
+                            decay: 0.1,
+                            sustain: 0.1,
+                            release: 0.3,
+                        },
+                    }).toDestination();
+
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("A5", "16n", now);
+                    synth.triggerAttackRelease("A5", "16n", now + 0.15);
+                } catch (error) {
+                    console.error("Erro ao reproduzir alerta:", error);
+                }
+            }
+
+            function triggerEndingWarning() {
+                playWarningSound();
+                pauseTimer();
+                jokeAdModal.classList.remove("hidden");
+                jokeAdModal.classList.add("flex");
+
+                progressRing.setAttribute("stroke", "#f59e0b");
+                timerDisplay.classList.add("text-amber-600", "animate-pulse");
+                focoStatusBadge.textContent = "Tempo Acabando!";
+                focoStatusBadge.className =
+                    "px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-400 text-amber-950 animate-bounce";
+            }
+
+            function closeJokeAd(paid) {
+                jokeAdModal.classList.add("hidden");
+                jokeAdModal.classList.remove("flex");
+                if (paid) {
+                    showUnifiedToast(
+                        "Pagamento Aprovado! 😂",
+                        "Obrigado pelos $5 imaginários! Reta final liberada.",
+                    );
+                } else {
+                    showUnifiedToast(
+                        "Reta Final Liberada!",
+                        "Faltam apenas 10 segundos para acabar.",
+                    );
+                }
+                startTimer();
+            }
+
+            function clearEndingWarning() {
+                endingWarned = false;
+                timerDisplay.classList.remove(
+                    "text-amber-600",
+                    "animate-pulse",
+                );
+
+                if (currentMode === "study") {
+                    progressRing.setAttribute("stroke", "#059669");
+                    focoStatusBadge.textContent = "Hora de Focar";
+                    focoStatusBadge.className =
+                        "px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/25";
+                } else if (currentMode === "break") {
+                    progressRing.setAttribute("stroke", "#0d9488");
+                    focoStatusBadge.textContent = "Pausa Rápida";
+                    focoStatusBadge.className =
+                        "px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/25";
+                } else {
+                    progressRing.setAttribute("stroke", "#10b981");
+                    focoStatusBadge.textContent = "Foco Expresso";
+                    focoStatusBadge.className =
+                        "px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-white/20 text-white border border-white/25";
+                }
+            }
+
+            function updateTimerDisplay() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+                timerDisplay.textContent = formattedTime;
+                miniTimerText.textContent = formattedTime;
+                document.title = isRunning
+                    ? `${formattedTime} • Estude++`
+                    : "Estude++ | Plataforma Escolar Integrada";
+
+                const progress = timeLeft / totalTime;
+                const offset = CIRCUMFERENCE - progress * CIRCUMFERENCE;
+                progressRing.style.strokeDashoffset = offset;
+            }
+
+            function toggleTimer() {
+                if (
+                    typeof Tone !== "undefined" &&
+                    Tone.context &&
+                    Tone.context.state !== "running"
+                ) {
+                    Tone.start();
+                }
+                if (isRunning) pauseTimer();
+                else startTimer();
+            }
+
+            function startTimer() {
+                if (isRunning) return;
+                isRunning = true;
+                updateMiniTimerPill();
+
+                mainActionText.textContent = "Pausar";
+                playIcon.classList.add("hidden");
+                pauseIcon.classList.remove("hidden");
+                mainActionBtn.classList.remove(
+                    "bg-escola-600",
+                    "hover:bg-escola-500",
+                );
+                mainActionBtn.classList.add(
+                    "bg-amber-500",
+                    "hover:bg-amber-400",
+                    "shadow-amber-500/30",
+                );
+
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        if (timeLeft === 10 && !endingWarned) {
+                            endingWarned = true;
+                            triggerEndingWarning();
+                        }
+                        updateTimerDisplay();
+                    } else {
+                        handleTimerComplete();
+                    }
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                isRunning = false;
+                clearInterval(timerInterval);
+                updateMiniTimerPill();
+
+                mainActionText.textContent = "Continuar";
+                pauseIcon.classList.add("hidden");
+                playIcon.classList.remove("hidden");
+                mainActionBtn.classList.remove(
+                    "bg-amber-500",
+                    "hover:bg-amber-400",
+                    "shadow-amber-500/30",
+                );
+                mainActionBtn.classList.add(
+                    "bg-escola-600",
+                    "hover:bg-escola-500",
+                );
+                updateTimerDisplay();
+            }
+
+            function resetTimer() {
+                pauseTimer();
+                clearEndingWarning();
+                mainActionText.textContent = "Iniciar";
+                if (currentMode === "study") timeLeft = STUDY_TIME;
+                else if (currentMode === "break") timeLeft = BREAK_TIME;
+                else timeLeft = QUICK_TIME;
+                totalTime = timeLeft;
+                updateTimerDisplay();
+            }
+
+            function handleTimerComplete() {
+                pauseTimer();
+                clearEndingWarning();
+                playCompletionSound();
+
+                if (currentMode === "study") {
+                    cyclesCompleted++;
+                    cycleCountDisplay.textContent = cyclesCompleted;
+                    summaryCycles.textContent = cyclesCompleted;
+                    localStorage.setItem("focoTotalCycles", cyclesCompleted);
+                    showUnifiedToast(
+                        "Ciclo Concluído!",
+                        "Parabéns! Hora de descansar por 5 minutos.",
+                    );
+                    switchMode("break");
+                } else if (currentMode === "break") {
+                    showUnifiedToast(
+                        "Pausa Finalizada!",
+                        "Bateria recarregada. Vamos voltar aos estudos!",
+                    );
+                    switchMode("study");
+                } else {
+                    showUnifiedToast(
+                        "1 Minuto Concluído!",
+                        "Cronômetro rápido finalizado com sucesso.",
+                    );
+                    switchMode("quick");
+                }
+            }
+
+            function switchMode(mode) {
+                currentMode = mode;
+                pauseTimer();
+                clearEndingWarning();
+                mainActionText.textContent = "Iniciar";
+
+                [modeStudyBtn, modeBreakBtn, modeQuickBtn].forEach((btn) => {
+                    btn.classList.remove(
+                        "bg-escola-600",
+                        "bg-teal-600",
+                        "bg-emerald-600",
+                        "text-white",
+                        "shadow-sm",
+                    );
+                    btn.classList.add(
+                        "text-escola-700",
+                        "hover:bg-escola-100/70",
+                    );
+                });
+
+                if (mode === "study") {
+                    timeLeft = STUDY_TIME;
+                    totalTime = STUDY_TIME;
+                    modeStudyBtn.classList.add(
+                        "bg-escola-600",
+                        "text-white",
+                        "shadow-sm",
+                    );
+                    modeStudyBtn.classList.remove(
+                        "text-escola-700",
+                        "hover:bg-escola-100/70",
+                    );
+                    progressRing.setAttribute("stroke", "#059669");
+                    focoStatusBadge.textContent = "Hora de Focar";
+                    motivationalTip.textContent =
+                        "Deixe o celular de lado e mergulhe nos estudos.";
+                } else if (mode === "break") {
+                    timeLeft = BREAK_TIME;
+                    totalTime = BREAK_TIME;
+                    modeBreakBtn.classList.add(
+                        "bg-teal-600",
+                        "text-white",
+                        "shadow-sm",
+                    );
+                    modeBreakBtn.classList.remove(
+                        "text-escola-700",
+                        "hover:bg-escola-100/70",
+                    );
+                    progressRing.setAttribute("stroke", "#0d9488");
+                    focoStatusBadge.textContent = "Pausa Rápida";
+                    motivationalTip.textContent =
+                        "Respire fundo, beba água e descanse a mente.";
+                } else {
+                    timeLeft = QUICK_TIME;
+                    totalTime = QUICK_TIME;
+                    modeQuickBtn.classList.add(
+                        "bg-emerald-600",
+                        "text-white",
+                        "shadow-sm",
+                    );
+                    modeQuickBtn.classList.remove(
+                        "text-escola-700",
+                        "hover:bg-escola-100/70",
+                    );
+                    progressRing.setAttribute("stroke", "#10b981");
+                    focoStatusBadge.textContent = "Foco Expresso";
+                    motivationalTip.textContent =
+                        "1 minuto para revisar um conceito ou questão.";
+                }
+                updateTimerDisplay();
+            }
+
+            mainActionBtn.addEventListener("click", toggleTimer);
+            resetBtn.addEventListener("click", resetTimer);
+            modeStudyBtn.addEventListener("click", () => switchMode("study"));
+            modeBreakBtn.addEventListener("click", () => switchMode("break"));
+            modeQuickBtn.addEventListener("click", () => switchMode("quick"));
+            payJokeBtn.addEventListener("click", () => closeJokeAd(true));
+            skipJokeBtn.addEventListener("click", () => closeJokeAd(false));
+
+            resetCyclesBtn.addEventListener("click", () => {
+                cyclesCompleted = 0;
+                cycleCountDisplay.textContent = cyclesCompleted;
+                summaryCycles.textContent = cyclesCompleted;
+                localStorage.setItem("focoTotalCycles", 0);
+                showUnifiedToast(
+                    "Contador Zerado",
+                    "Seus ciclos de estudo foram reiniciados.",
+                );
+            });
+
+            soundToggleBtn.addEventListener("click", () => {
+                soundEnabled = !soundEnabled;
+                if (soundEnabled) {
+                    soundOnIcon.classList.remove("hidden");
+                    soundOffIcon.classList.add("hidden");
+                    showUnifiedToast(
+                        "Som Ativado",
+                        "Você ouvirá um alerta ao fim de cada ciclo.",
+                    );
+                } else {
+                    soundOnIcon.classList.add("hidden");
+                    soundOffIcon.classList.remove("hidden");
+                    showUnifiedToast(
+                        "Som Desativado",
+                        "O cronômetro funcionará em modo silencioso.",
+                    );
+                }
+            });
+
+            // =====================================================================
+            // 3. LÓGICA DO MÓDULO 2: CONTFALTA (HISTÓRICO DE FALTAS)
+            // =====================================================================
+            const DEFAULT_SUBJECTS = [
+                "Matemática",
+                "Português",
+                "História",
+                "Geografia",
+                "Ciências / Bio",
+                "Física",
+                "Química",
+                "Inglês",
+                "Ed. Física",
+            ];
+
+            let appState = {
+                absences: 0,
+                maxLimit: 50,
+                history: [],
+            };
+
+            let selectedAddAmount = 1;
+
+            function loadFaltasData() {
+                try {
+                    const saved = localStorage.getItem("contfalta_data_v2");
+                    if (saved) {
+                        appState = JSON.parse(saved);
+                        recalculateTotal();
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar dados de faltas:", e);
+                }
+                renderSubjectChips();
+                updateFaltasUI();
+            }
+
+            function recalculateTotal() {
+                appState.absences = appState.history.reduce(
+                    (sum, item) => sum + Number(item.amount),
+                    0,
+                );
+            }
+
+            function saveFaltasData() {
+                try {
+                    localStorage.setItem(
+                        "contfalta_data_v2",
+                        JSON.stringify(appState),
+                    );
+                } catch (e) {
+                    console.error("Erro ao salvar dados de faltas:", e);
+                }
+            }
+
+            function escapeHTML(str) {
+                return String(str).replace(
+                    /[&<>'"]/g,
+                    (tag) =>
+                        ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            "'": "&#39;",
+                            '"': "&quot;",
+                        })[tag],
+                );
+            }
+
+            function updateFaltasUI() {
+                recalculateTotal();
+                const { absences, maxLimit } = appState;
+
+                document.getElementById("absences-count").textContent =
+                    absences;
+                document.getElementById("limit-count").textContent = maxLimit;
+                document.getElementById("header-limit-display").textContent =
+                    maxLimit;
+                document.getElementById("summary-absences").textContent =
+                    absences;
+                document.getElementById("summary-limit").textContent = maxLimit;
+
+                const rawPercent =
+                    maxLimit > 0 ? (absences / maxLimit) * 100 : 0;
+                const displayPercent = Math.round(rawPercent);
+                const barWidth = Math.min(rawPercent, 100);
+
+                document.getElementById("percentage-display").textContent =
+                    `${displayPercent}% da meta`;
+                document.getElementById("progress-bar").style.width =
+                    `${barWidth}%`;
+
+                const remaining = maxLimit - absences;
+                const remainingEl = document.getElementById("remaining-text");
+
+                if (remaining > 1) {
+                    remainingEl.textContent = `Você ainda pode faltar ${remaining} vezes na meta`;
+                } else if (remaining === 1) {
+                    remainingEl.textContent = `Atenção! Resta apenas 1 falta na sua meta`;
+                } else if (remaining === 0) {
+                    remainingEl.textContent = `Você atingiu exatamente a meta de faltas!`;
+                } else {
+                    remainingEl.textContent = `Passou ${Math.abs(remaining)} falta(s) da meta (contando livremente)`;
+                }
+
+                const card = document.getElementById("faltas-status-card");
+                const statusLabel = document.getElementById(
+                    "faltas-status-label",
+                );
+                const statusIcon =
+                    document.getElementById("faltas-status-icon");
+                const summaryBadge = document.getElementById(
+                    "summary-faltas-badge",
+                );
+
+                card.classList.remove(
+                    "from-emerald-600",
+                    "to-teal-600",
+                    "from-amber-400",
+                    "to-orange-500",
+                    "from-rose-500",
+                    "to-red-600",
+                );
+
+                if (rawPercent < 60) {
+                    card.classList.add("from-emerald-600", "to-teal-600");
+                    statusLabel.textContent = "Zona Verde • Seguro";
+                    statusIcon.className = "ph-fill ph-check-circle text-sm";
+                    summaryBadge.textContent = "Seguro";
+                    summaryBadge.className =
+                        "text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full";
+                } else if (rawPercent < 85) {
+                    card.classList.add("from-amber-400", "to-orange-500");
+                    statusLabel.textContent = "Zona Amarela • Atenção";
+                    statusIcon.className = "ph-fill ph-warning text-sm";
+                    summaryBadge.textContent = "Atenção";
+                    summaryBadge.className =
+                        "text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full";
+                } else {
+                    card.classList.add("from-rose-500", "to-red-600");
+                    statusLabel.textContent =
+                        rawPercent >= 100
+                            ? "Zona Vermelha • Acima da Meta"
+                            : "Zona Vermelha • Cuidado";
+                    statusIcon.className = "ph-fill ph-warning-octagon text-sm";
+                    summaryBadge.textContent = "Alerta";
+                    summaryBadge.className =
+                        "text-[10px] font-extrabold uppercase tracking-wider text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full";
+                }
+
+                document.getElementById("btn-remove").disabled = absences <= 0;
+                renderFaltasHistory();
+            }
+
+            function renderFaltasHistory() {
+                const listEl = document.getElementById("history-list");
+                const emptyEl = document.getElementById("empty-history");
+                const clearBtn = document.getElementById("btn-clear-all");
+
+                listEl.innerHTML = "";
+
+                if (appState.history.length === 0) {
+                    emptyEl.classList.remove("hidden");
+                    clearBtn.classList.add("hidden");
+                    return;
+                }
+
+                emptyEl.classList.add("hidden");
+                clearBtn.classList.remove("hidden");
+
+                const badgeColors = [
+                    "bg-escola-100 text-escola-800",
+                    "bg-teal-100 text-teal-800",
+                    "bg-emerald-100 text-emerald-800",
+                    "bg-cyan-100 text-cyan-800",
+                ];
+
+                appState.history
+                    .slice()
+                    .reverse()
+                    .forEach((item, idx) => {
+                        const colorClass =
+                            badgeColors[idx % badgeColors.length];
+                        const row = document.createElement("div");
+                        row.className =
+                            "flex items-center justify-between p-3 rounded-2xl bg-white border border-escola-200/80 shadow-2xs";
+
+                        row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="px-2.5 py-1.5 rounded-xl ${colorClass} font-extrabold text-xs flex items-center justify-center">
+                            +${item.amount}
+                        </span>
+                        <div>
+                            <p class="text-xs font-extrabold text-slate-800">${escapeHTML(item.note)}</p>
+                            <p class="text-[10px] text-slate-500 font-semibold">${item.date}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="openEditModal(${item.id})" class="p-2 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors" title="Editar este registro">
+                            <i class="ph-bold ph-pencil-simple text-sm"></i>
+                        </button>
+                        <button onclick="deleteHistoryItem(${item.id})" class="p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-100 transition-colors" title="Apagar este registro">
+                            <i class="ph-bold ph-trash text-sm"></i>
+                        </button>
+                    </div>
+                `;
+                        listEl.appendChild(row);
+                    });
+            }
+
+            function showModalError(errorId, textId, boxId, message) {
+                const errEl = document.getElementById(errorId);
+                const txtEl = document.getElementById(textId);
+                const boxEl = document.getElementById(boxId);
+
+                if (txtEl) txtEl.textContent = message;
+                if (errEl) {
+                    errEl.classList.remove("hidden");
+                    errEl.classList.add("flex");
+                }
+                if (boxEl) {
+                    boxEl.classList.remove("animate-shake");
+                    void boxEl.offsetWidth;
+                    boxEl.classList.add("animate-shake");
+                }
+            }
+
+            function clearError(errorId) {
+                const errEl = document.getElementById(errorId);
+                if (errEl) {
+                    errEl.classList.add("hidden");
+                    errEl.classList.remove("flex");
+                }
+            }
+
+            function openAddModal() {
+                selectedAddAmount = 1;
+                selectAmount(1);
+                document.getElementById("absence-note").value = "";
+                document.getElementById("custom-amount-input").value = 1;
+                clearError("add-error");
+                renderSubjectChips();
+
+                const modal = document.getElementById("add-modal");
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+
+            function openEditModal(id) {
+                const item = appState.history.find((h) => h.id === id);
+                if (!item) return;
+
+                document.getElementById("edit-item-id").value = item.id;
+                document.getElementById("edit-note-input").value = item.note;
+                document.getElementById("edit-amount-input").value =
+                    item.amount;
+                clearError("edit-error");
+
+                const modal = document.getElementById("edit-modal");
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+
+            function openConfigModal() {
+                document.getElementById("input-max-limit").value =
+                    appState.maxLimit;
+                clearError("config-error");
+                const modal = document.getElementById("config-modal");
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+
+            function openResetModal() {
+                const modal = document.getElementById("reset-modal");
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+
+            function closeModal(id) {
+                const modal = document.getElementById(id);
+                if (modal) {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                }
+            }
+
+            function selectAmount(val) {
+                selectedAddAmount = val;
+                document.getElementById("custom-amount-input").value = val;
+                clearError("add-error");
+                document.querySelectorAll(".amount-btn").forEach((btn) => {
+                    if (parseInt(btn.dataset.val) === val) {
+                        btn.className =
+                            "amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-escola-600 bg-escola-600 text-white shadow-xs";
+                    } else {
+                        btn.className =
+                            "amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-slate-200 text-slate-700 hover:border-escola-300";
+                    }
+                });
+            }
+
+            function renderSubjectChips() {
+                const container = document.getElementById("subject-chips");
+                const tarotContainer = document.getElementById(
+                    "tarot-subject-chips",
+                );
+                container.innerHTML = "";
+                if (tarotContainer) tarotContainer.innerHTML = "";
+
+                const customSubjects = appState.history.map((h) => h.note);
+                const allSubjects = [
+                    ...new Set([...DEFAULT_SUBJECTS, ...customSubjects]),
+                ];
+
+                allSubjects.forEach((subj) => {
+                    // Chip para o modal de Faltas
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = subj;
+                    btn.className =
+                        "px-3 py-1.5 rounded-xl text-xs font-bold bg-escola-50 text-escola-800 hover:bg-escola-600 hover:text-white border border-escola-200 transition-colors btn-press";
+                    btn.onclick = () => {
+                        document.getElementById("absence-note").value = subj;
+                        clearError("add-error");
+                    };
+                    container.appendChild(btn);
+
+                    // Chip para o módulo Tarô da Prova
+                    if (tarotContainer) {
+                        const tBtn = document.createElement("button");
+                        tBtn.type = "button";
+                        tBtn.textContent = subj;
+                        tBtn.className =
+                            "px-3 py-1.5 rounded-xl text-xs font-bold bg-escola-50 text-escola-800 hover:bg-escola-600 hover:text-white border border-escola-200 transition-colors btn-press";
+                        tBtn.onclick = () => {
+                            document.getElementById(
+                                "tarot-subject-input",
+                            ).value = subj;
+                            clearError("tarot-error");
+                        };
+                        tarotContainer.appendChild(tBtn);
+                    }
+                });
+            }
+
+            function parsePositiveInt(rawValue) {
+                const cleaned = String(rawValue ?? "").trim();
+                if (!/^\d+$/.test(cleaned)) return NaN;
+                const num = Number(cleaned);
+                return Number.isSafeInteger(num) && num >= 1 ? num : NaN;
+            }
+
+            function syncCustomAmount(val) {
+                clearError("add-error");
+                const num = parsePositiveInt(val);
+                selectedAddAmount = isNaN(num) ? 0 : num;
+                document.querySelectorAll(".amount-btn").forEach((btn) => {
+                    if (!isNaN(num) && parseInt(btn.dataset.val, 10) === num) {
+                        btn.className =
+                            "amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-escola-600 bg-escola-600 text-white shadow-xs";
+                    } else {
+                        btn.className =
+                            "amount-btn py-2.5 rounded-xl font-extrabold text-sm border-2 border-slate-200 text-slate-700 hover:border-escola-300";
+                    }
+                });
+            }
+
+            function confirmAddAbsence() {
+                const noteInput = document
+                    .getElementById("absence-note")
+                    .value.trim();
+                const amountVal = parsePositiveInt(
+                    document.getElementById("custom-amount-input").value,
+                );
+
+                if (!noteInput) {
+                    showModalError(
+                        "add-error",
+                        "add-error-text",
+                        "add-modal-box",
+                        "Erro: Selecione ou digite o nome da matéria!",
+                    );
+                    return;
+                }
+                if (isNaN(amountVal)) {
+                    showModalError(
+                        "add-error",
+                        "add-error-text",
+                        "add-modal-box",
+                        "Erro: Informe um número inteiro válido de faltas (mínimo 1)!",
+                    );
+                    return;
+                }
+
+                const now = new Date();
+                const dateStr =
+                    now.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                    }) +
+                    " às " +
+                    now.toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    });
+
+                appState.history.push({
+                    id: Date.now(),
+                    amount: amountVal,
+                    note: noteInput,
+                    date: dateStr,
+                });
+
+                saveFaltasData();
+                updateFaltasUI();
+                renderSubjectChips();
+                closeModal("add-modal");
+                showUnifiedToast(
+                    "Falta Registrada",
+                    `+${amountVal} falta(s) em ${noteInput}!`,
+                );
+            }
+
+            function saveEditedItem() {
+                const id = Number(
+                    document.getElementById("edit-item-id").value,
+                );
+                const newNote = document
+                    .getElementById("edit-note-input")
+                    .value.trim();
+                const newAmount = parsePositiveInt(
+                    document.getElementById("edit-amount-input").value,
+                );
+
+                if (!newNote) {
+                    showModalError(
+                        "edit-error",
+                        "edit-error-text",
+                        "edit-modal-box",
+                        "Erro: O campo da matéria não pode ficar vazio!",
+                    );
+                    return;
+                }
+                if (isNaN(newAmount)) {
+                    showModalError(
+                        "edit-error",
+                        "edit-error-text",
+                        "edit-modal-box",
+                        "Erro: Informe um número inteiro válido (mínimo 1)!",
+                    );
+                    return;
+                }
+
+                const itemIndex = appState.history.findIndex(
+                    (h) => h.id === id,
+                );
+                if (itemIndex !== -1) {
+                    appState.history[itemIndex].note = newNote;
+                    appState.history[itemIndex].amount = newAmount;
+
+                    saveFaltasData();
+                    updateFaltasUI();
+                    closeModal("edit-modal");
+                    showUnifiedToast(
+                        "Registro Atualizado",
+                        "Falta editada com sucesso!",
+                    );
+                }
+            }
+
+            function removeAbsence() {
+                if (appState.history.length === 0) return;
+
+                const lastItem = appState.history[appState.history.length - 1];
+                if (lastItem.amount > 1) {
+                    lastItem.amount -= 1;
+                } else {
+                    appState.history.pop();
+                }
+
+                saveFaltasData();
+                updateFaltasUI();
+                showUnifiedToast(
+                    "Falta Removida",
+                    "1 falta foi descontada do último registro.",
+                );
+            }
+
+            function deleteHistoryItem(id) {
+                const index = appState.history.findIndex(
+                    (item) => item.id === id,
+                );
+                if (index !== -1) {
+                    appState.history.splice(index, 1);
+                    saveFaltasData();
+                    updateFaltasUI();
+                    showUnifiedToast(
+                        "Registro Apagado",
+                        "O item foi removido do histórico.",
+                    );
+                }
+            }
+
+            function setQuickLimit(val) {
+                document.getElementById("input-max-limit").value = val;
+                clearError("config-error");
+            }
+
+            function saveLimit() {
+                const val = parsePositiveInt(
+                    document.getElementById("input-max-limit").value,
+                );
+
+                if (isNaN(val)) {
+                    showModalError(
+                        "config-error",
+                        "config-error-text",
+                        "config-modal-box",
+                        "Erro: Preencha um número inteiro válido maior que zero!",
+                    );
+                    return;
+                }
+
+                appState.maxLimit = val;
+                saveFaltasData();
+                updateFaltasUI();
+                closeModal("config-modal");
+                showUnifiedToast(
+                    "Meta Atualizada",
+                    `Referência ajustada para ${val} faltas.`,
+                );
+            }
+
+            function confirmResetAll() {
+                appState.absences = 0;
+                appState.history = [];
+                saveFaltasData();
+                updateFaltasUI();
+                closeModal("reset-modal");
+                showUnifiedToast(
+                    "Histórico Zerado",
+                    "Todas as faltas foram apagadas.",
+                );
+            }
+
+            // =====================================================================
+            // 4. LÓGICA DO MÓDULO 3: CALCULADORA DE NOTAS
+            // =====================================================================
+            const gradesForm = document.getElementById("grades-form");
+            const inputNota1 = document.getElementById("nota1");
+            const inputNota2 = document.getElementById("nota2");
+            const inputNota3 = document.getElementById("nota3");
+            const btnLimparNotas = document.getElementById("btn-limpar-notas");
+
+            const notasErrorBox = document.getElementById("notas-error-box");
+            const notasErrorMessage = document.getElementById(
+                "notas-error-message",
+            );
+
+            const notasResultCard =
+                document.getElementById("notas-result-card");
+            const notasStatusBadge =
+                document.getElementById("notas-status-badge");
+            const neededGradeEl = document.getElementById("needed-grade");
+            const notasResultMessageEl = document.getElementById(
+                "notas-result-message",
+            );
+            const currentPointsEl = document.getElementById("current-points");
+            const summaryNeededGrade = document.getElementById(
+                "summary-needed-grade",
+            );
+            const summaryGradeLabel = document.getElementById(
+                "summary-grade-label",
+            );
+
+            function formatarNota(valor) {
+                return valor.toFixed(1).replace(".", ",");
+            }
+
+            function mostrarErroNotas(mensagem) {
+                notasErrorMessage.innerHTML = mensagem;
+                notasErrorBox.classList.remove("hidden");
+                notasResultCard.classList.add("hidden");
+            }
+
+            function esconderErroNotas() {
+                notasErrorBox.classList.add("hidden");
+                [inputNota1, inputNota2, inputNota3].forEach((input) => {
+                    input.classList.remove(
+                        "border-rose-400",
+                        "bg-rose-50/60",
+                        "focus:border-rose-500",
+                    );
+                    input.classList.add(
+                        "border-escola-200",
+                        "bg-escola-50/50",
+                        "focus:border-escola-600",
+                    );
+                });
+            }
+
+            function marcarCampoNotaErro(input) {
+                input.classList.remove(
+                    "border-escola-200",
+                    "bg-escola-50/50",
+                    "focus:border-escola-600",
+                );
+                input.classList.add(
+                    "border-rose-400",
+                    "bg-rose-50/60",
+                    "focus:border-rose-500",
+                );
+            }
+
+            function lerEValidarNota(input, nomeCampo, erros) {
+                const valorTexto = input.value.trim().replace(",", ".");
+                if (valorTexto === "") {
+                    erros.push(`Preencha a <strong>${nomeCampo}</strong>.`);
+                    marcarCampoNotaErro(input);
+                    return null;
+                }
+                const numero = parseFloat(valorTexto);
+                if (isNaN(numero) || numero < 0 || numero > 10) {
+                    erros.push(
+                        `A <strong>${nomeCampo}</strong> deve ser um valor entre 0 e 10.`,
+                    );
+                    marcarCampoNotaErro(input);
+                    return null;
+                }
+                return numero;
+            }
+
+            gradesForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                esconderErroNotas();
+
+                const erros = [];
+                const n1 = lerEValidarNota(inputNota1, "1ª Nota", erros);
+                const n2 = lerEValidarNota(inputNota2, "2ª Nota", erros);
+                const n3 = lerEValidarNota(inputNota3, "3ª Nota", erros);
+
+                if (erros.length > 0) {
+                    const mensagemFinal =
+                        erros.length === 1
+                            ? erros[0]
+                            : `<ul class="list-disc pl-4 space-y-0.5">${erros.map((err) => `<li>${err}</li>`).join("")}</ul>`;
+                    mostrarErroNotas(mensagemFinal);
+                    return;
+                }
+
+                try {
+                    const somaAtual = n1 + n2 + n3;
+                    const pontosNecessariosTotais = 24;
+                    let notaFaltante = pontosNecessariosTotais - somaAtual;
+
+                    if (Math.abs(notaFaltante) < 0.05) {
+                        notaFaltante = 0;
+                    }
+
+                    currentPointsEl.textContent = `${formatarNota(somaAtual)} pts`;
+
+                    notasResultCard.classList.remove(
+                        "border-emerald-400",
+                        "border-escola-300",
+                        "border-rose-300",
+                    );
+                    neededGradeEl.classList.remove(
+                        "text-emerald-600",
+                        "text-escola-700",
+                        "text-rose-600",
+                    );
+                    notasStatusBadge.className =
+                        "inline-block px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider mb-2";
+
+                    if (notaFaltante <= 0) {
+                        neededGradeEl.textContent = "0,0";
+                        neededGradeEl.classList.add("text-emerald-600");
+                        notasResultCard.classList.add("border-emerald-400");
+                        notasStatusBadge.classList.add(
+                            "bg-emerald-100",
+                            "text-emerald-800",
+                        );
+                        notasStatusBadge.textContent =
+                            "Parabéns! Você já passou!";
+                        notasResultMessageEl.innerHTML = `Você já somou <strong>${formatarNota(somaAtual)} pontos</strong> e garantiu a média 6,0 mesmo antes da última prova!`;
+
+                        summaryNeededGrade.textContent = "Passou!";
+                        summaryGradeLabel.textContent = "Média 6,0 garantida";
+                    } else if (notaFaltante > 10) {
+                        neededGradeEl.textContent = formatarNota(notaFaltante);
+                        neededGradeEl.classList.add("text-rose-600");
+                        notasResultCard.classList.add("border-rose-300");
+                        notasStatusBadge.classList.add(
+                            "bg-rose-100",
+                            "text-rose-700",
+                        );
+                        notasStatusBadge.textContent = "Atenção • Recuperação";
+                        notasResultMessageEl.innerHTML = `Como a nota máxima é <strong>10,0</strong>, não é possível atingir a média 6,0 direto. Tire a maior nota possível para ajudar na recuperação!`;
+
+                        summaryNeededGrade.textContent =
+                            formatarNota(notaFaltante);
+                        summaryGradeLabel.textContent = "Vai para recuperação";
+                    } else {
+                        neededGradeEl.textContent = formatarNota(notaFaltante);
+                        neededGradeEl.classList.add("text-escola-700");
+                        notasResultCard.classList.add("border-escola-300");
+                        notasStatusBadge.classList.add(
+                            "bg-escola-100",
+                            "text-escola-800",
+                        );
+                        notasStatusBadge.textContent =
+                            notaFaltante <= 5
+                                ? "Meta tranquila!"
+                                : "Foco nos estudos!";
+                        notasResultMessageEl.innerHTML = `Você precisa tirar pelo menos <strong>${formatarNota(notaFaltante)}</strong> na última avaliação para fechar com média <strong>6,0</strong>.`;
+
+                        summaryNeededGrade.textContent =
+                            formatarNota(notaFaltante);
+                        summaryGradeLabel.textContent = "Precisa na 4ª prova";
+                    }
+
+                    notasResultCard.classList.remove("hidden");
+                    notasResultCard.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                    });
+                } catch (err) {
+                    mostrarErroNotas(err.message);
+                }
+            });
+
+            btnLimparNotas.addEventListener("click", () => {
+                gradesForm.reset();
+                esconderErroNotas();
+                notasResultCard.classList.add("hidden");
+                summaryNeededGrade.textContent = "—";
+                summaryGradeLabel.textContent = "Nota na 4ª prova";
+                inputNota1.focus();
+            });
+
+            // =====================================================================
+            // 5. LÓGICA DO MÓDULO 4: TARÔ DA PROVA (ORÁCULO ESTUDANTIL)
+            // =====================================================================
+            const TAROT_DECK = [
+                {
+                    arcana: "Arcano I",
+                    title: "O Mago da Cola Mental",
+                    emoji: "🧙‍♂️",
+                    verdict: "Pode Relaxar!",
+                    shortVerdict: "Não precisa",
+                    level: "chill",
+                    desc: "Os astros indicam que você já absorveu a matéria nas aulas. Faça apenas uma leitura rápida de 5 minutos antes de dormir.",
+                },
+                {
+                    arcana: "Arcano II",
+                    title: "A Torre da Recuperação",
+                    emoji: "⚡",
+                    verdict: "Estude Urgente!",
+                    shortVerdict: "Estude já!",
+                    level: "study",
+                    desc: "Perigo iminente! O professor preparou questões capciosas. Abra o caderno agora e faça pelo menos 2 ciclos no Foco Total.",
+                },
+                {
+                    arcana: "Arcano III",
+                    title: "O Sol da Aprovação",
+                    emoji: "☀️",
+                    verdict: "Tranquilidade Total",
+                    shortVerdict: "Tá tranquilo",
+                    level: "chill",
+                    desc: "Energia radiante na sua prova! Seu raciocínio estará afiado. Descanse bem hoje para não ir com sono.",
+                },
+                {
+                    arcana: "Arcano IV",
+                    title: "O Eremita da Madrugada",
+                    emoji: "🕯️",
+                    verdict: "Revisão Obrigatória",
+                    shortVerdict: "Revise hoje",
+                    level: "study",
+                    desc: "Não confie só na memória! Separe 25 minutos silenciosos para refazer os exercícios passados no quadro.",
+                },
+                {
+                    arcana: "Arcano V",
+                    title: "A Roda da Fortuna",
+                    emoji: "🎡",
+                    verdict: "Estudo Estratégico",
+                    shortVerdict: "Estude o básico",
+                    level: "medium",
+                    desc: "A sorte favorece quem revisa os tópicos principais. Foque nos resumos e fórmulas mais cobradas que vai dar certo.",
+                },
+                {
+                    arcana: "Arcano VI",
+                    title: "O Louco Confiante",
+                    emoji: "🃏",
+                    verdict: "Arriscado Demais!",
+                    shortVerdict: "Estude agora",
+                    level: "study",
+                    desc: "Ir para essa prova sem estudar é um salto no escuro! Dê uma olhada na matéria antes que seja tarde.",
+                },
+                {
+                    arcana: "Arcano VII",
+                    title: "A Estrela da Inspiração",
+                    emoji: "⭐",
+                    verdict: "Mente Preparada",
+                    shortVerdict: "Sem estresse",
+                    level: "chill",
+                    desc: "Você está alinhado com o conteúdo. Confie no que aprendeu e evite estudar em cima da hora para não gerar ansiedade.",
+                },
+                {
+                    arcana: "Arcano VIII",
+                    title: "A Justiça da Nota 6,0",
+                    emoji: "⚖️",
+                    verdict: "Estude na Medida",
+                    shortVerdict: "1 ciclo basta",
+                    level: "medium",
+                    desc: "Você colherá exatamente o que revisar hoje. Um único ciclo de 25 minutos no Foco Total garante sua paz.",
+                },
+            ];
+
+            let tarotHistory = [];
+
+            function drawTarotCard() {
+                const inputEl = document.getElementById("tarot-subject-input");
+                const subject = inputEl.value.trim();
+
+                if (!subject) {
+                    const errEl = document.getElementById("tarot-error");
+                    errEl.classList.remove("hidden");
+                    errEl.classList.add("flex");
+                    inputEl.focus();
+                    return;
+                }
+
+                clearError("tarot-error");
+
+                // Sorteia uma carta aleatória
+                const card =
+                    TAROT_DECK[Math.floor(Math.random() * TAROT_DECK.length)];
+
+                const cardBack = document.getElementById("tarot-card-back");
+                const cardFront = document.getElementById("tarot-card-front");
+                const verdictBadge = document.getElementById(
+                    "tarot-verdict-badge",
+                );
+                const goFocusBtn =
+                    document.getElementById("tarot-go-focus-btn");
+
+                cardBack.classList.add("hidden");
+                cardFront.classList.remove(
+                    "hidden",
+                    "bg-emerald-50",
+                    "border-emerald-300",
+                    "bg-amber-50",
+                    "border-amber-300",
+                    "bg-rose-50",
+                    "border-rose-300",
+                );
+
+                // Reinicia animação de revelação
+                void cardFront.offsetWidth;
+                cardFront.classList.add("animate-card-reveal");
+
+                document.getElementById("tarot-arcana-num").textContent =
+                    card.arcana;
+                document.getElementById("tarot-card-emoji").textContent =
+                    card.emoji;
+                document.getElementById("tarot-revealed-subject").textContent =
+                    subject;
+                document.getElementById("tarot-card-title").textContent =
+                    card.title;
+                document.getElementById("tarot-card-desc").textContent =
+                    card.desc;
+                verdictBadge.textContent = card.verdict;
+
+                // Estiliza de acordo com o nível de necessidade de estudo
+                if (card.level === "chill") {
+                    cardFront.classList.add(
+                        "bg-emerald-50/90",
+                        "border-emerald-300",
+                    );
+                    verdictBadge.className =
+                        "text-[11px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full bg-emerald-200 text-emerald-900";
+                    goFocusBtn.classList.add("hidden");
+                } else if (card.level === "medium") {
+                    cardFront.classList.add(
+                        "bg-amber-50/90",
+                        "border-amber-300",
+                    );
+                    verdictBadge.className =
+                        "text-[11px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full bg-amber-200 text-amber-900";
+                    goFocusBtn.classList.remove("hidden");
+                } else {
+                    cardFront.classList.add("bg-rose-50/90", "border-rose-300");
+                    verdictBadge.className =
+                        "text-[11px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full bg-rose-200 text-rose-900";
+                    goFocusBtn.classList.remove("hidden");
+                }
+
+                // Atualiza resumo no topo
+                document.getElementById("summary-tarot-verdict").textContent =
+                    card.shortVerdict;
+                document.getElementById("summary-tarot-subject").textContent =
+                    subject;
+
+                // Salva no histórico da sessão
+                tarotHistory.unshift({
+                    subject,
+                    title: card.title,
+                    verdict: card.shortVerdict,
+                    emoji: card.emoji,
+                    level: card.level,
+                });
+                if (tarotHistory.length > 5) tarotHistory.pop();
+                renderTarotHistory();
+
+                showUnifiedToast(
+                    `Tarô • ${subject}`,
+                    `${card.emoji} ${card.title}: ${card.verdict}`,
+                );
+            }
+
+            function renderTarotHistory() {
+                const wrapper = document.getElementById(
+                    "tarot-history-wrapper",
+                );
+                const list = document.getElementById("tarot-history-list");
+
+                if (tarotHistory.length === 0) {
+                    wrapper.classList.add("hidden");
+                    return;
+                }
+
+                wrapper.classList.remove("hidden");
+                list.innerHTML = "";
+
+                tarotHistory.forEach((item) => {
+                    const badgeColor =
+                        item.level === "chill"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : item.level === "medium"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-rose-100 text-rose-800";
+
+                    const row = document.createElement("div");
+                    row.className =
+                        "flex items-center justify-between px-3 py-2 rounded-xl bg-escola-50/70 border border-escola-100 text-xs";
+                    row.innerHTML = `
+                    <span class="font-bold text-slate-700 truncate pr-2">${item.emoji} ${escapeHTML(item.subject)}</span>
+                    <span class="px-2 py-0.5 rounded-lg font-extrabold text-[10px] shrink-0 ${badgeColor}">${item.verdict}</span>
+                `;
+                    list.appendChild(row);
+                });
+            }
+
+            function clearTarotHistory() {
+                tarotHistory = [];
+                renderTarotHistory();
+            }
+
+            function startFocusFromTarot() {
+                filterView("foco");
+                const modFoco = document.getElementById("module-foco");
+                if (modFoco) {
+                    modFoco.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
+                }
+                if (!isRunning) {
+                    startTimer();
+                }
+            }
+
+            // =====================================================================
+            // 6. INICIALIZAÇÃO GERAL DO ESTUDE++
+            // =====================================================================
+            window.addEventListener("DOMContentLoaded", () => {
+                updateTimerDisplay();
+                loadFaltasData();
+                filterView("all");
+            });
+        </script>
+    </body>
+</html>
